@@ -1,71 +1,115 @@
-import requests
 import re
 import json
+import requests
 
-username = '0161121574'
-password = '582565'
-# 软工 : 32937
-major_num = '32937'
-id = '120120230'
-name = '唐诗意境与人生情怀(A模块)'
-# kcIds = 课程号_课序号_上课时间
-# 上课时间：秋季：2018-2019-1-2
-# kcms = 完整课程名_课序号
-
-url = 'http://jwxt.imu.edu.cn/j_spring_security_check'
-data = {
-    'j_username': username,
-    'j_password': password,
-    'j_captcha1': 'error'
-}
-cookie = {
-    'JSESSIONID': 'abcoQsXmzZp0j8Ls3g3pw'
-}
-count = 0
+url = 'http://jwxt.imu.edu.cn'
 session = requests.session()
-while True:
-    result = session.post(url, data=data, cookies=cookie)
-    cookies = requests.utils.dict_from_cookiejar(session.cookies)
-    count = count + 1
-    if 'Internal Server Error' in result.text:
-        if '502' in result.text:
-            if count % 100 == 0:
-                print(count)
-    else:
-        print("Success:")
-        # 获取token
-        sel_url = 'http://jwxt.imu.edu.cn/student/courseSelect/planCourse/index?fajhh=' + major_num
+is_login = False
+
+
+def getNewCookie():
+    u = url + '/login'
+    session.get(u)
+    cookie = requests.utils.dict_from_cookiejar(session.cookies)
+    while cookie['JSESSIONID'] == '':
+        session.get(u)
+        cookie = requests.utils.dict_from_cookiejar(session.cookies)
+    return cookie
+
+
+def getCurrentCookie():
+    return requests.utils.dict_from_cookiejar(session.cookies)
+
+
+def getToken(major_num):
+    if is_login:
+        sel_url = url + '/student/courseSelect/planCourse/index?fajhh=' + major_num
         sel_cookie = {
-            'JSESSIONID': 'abcoQsXmzZp0j8Ls3g3pw',
+            'JSESSIONID': getCurrentCookie(),
             'selectionBar': '1293218'
         }
         r = session.get(sel_url, cookies=sel_cookie)
-        token = re.findall('value="[0-9a-z]{32}', r.text)[0][7:]
+        temp = re.findall('value="[0-9a-z]{32}', r.text)
+        while temp.__len__() == 0:
+            r = session.get(sel_url, cookies=sel_cookie)
+            temp = re.findall('value="[0-9a-z]{32}', r.text)
+        return temp[0][7:]
 
-        # 选课
-        choice_url = 'http://jwxt.imu.edu.cn/student/courseSelect/planCourse/waitingfor?dealType=2'
+
+def getMajorNum():
+    # 16软工 : 32937
+    # 15网工 :
+    pass
+
+
+def login(u, p):
+    req = url + '/j_spring_security_check'
+    print(req)
+    data = {
+        'j_username': u,
+        'j_password': p,
+        'j_captcha1': 'error'
+    }
+    count = 0
+    while True:
+        count = count + 1
+        cookie = getNewCookie()
+        result = session.post(req, data=data, cookies=cookie)
+        if '欢迎您' in result.text:
+            print("[-] Success Login")
+            is_login = True
+            return getCurrentCookie()
+        elif '登 录' in result.text:
+            return
+        else:
+            print(result.text)
+            if count % 100 == 0:
+                print('[+] ' + str(count) + ' : Failed')
+
+
+def choiceLesson(Id, Name):
+    if is_login:
+        choice_url = url + '/student/courseSelect/planCourse/waitingfor?dealType=2'
         para = {
-            'fajhh': '32937',
-            'kcIds': id + '_01_2018-2019-1-2',
-            'kcms': name + '_01',
+            'fajhh': getMajorNum(),
+            'kcIds': Id + '_01_2018-2019-1-2',
+            'kcms': Name + '_01',
             'sj': '0_0',
-            'tokenValue': token
+            'tokenValue': getToken()
         }
-        choice = session.post(choice_url, cookies=sel_cookie, data=para)
+        choice = session.post(choice_url, cookies=getCurrentCookie(), data=para)
+
+
+def checkResult(u):
+    if is_login:
         # 查询结果
-        check_url = 'http://jwxt.imu.edu.cn/student/courseSelect/selectResult/query'
+        check_url = url + '/student/courseSelect/selectResult/query'
         resu_data = {
             'kcNum': '1',
-            'redisKey': username
+            'redisKey': u
         }
-        check = session.post(check_url, cookies=sel_cookie, data=resu_data)
-        response = json.loads(check.content)
-        print(response)
-        if response['isFinish']:
-            if "选课成功！" in response['result']:
-                print("选课成功！")
+        for i in 10:
+            check = session.post(check_url, cookies=getCurrentCookie(), data=resu_data)
+            response = json.loads(check.content)
+            print('[-] ' + response)
+            if response['isFinish'] and response['result']:
+                if "选课成功！" in response['result']:
+                    print("[-] 选课成功！")
+                    return
+                else:
+                    print('[-] ' + response['result'])
+                    return
             else:
-                print(response['result'])
-        else:
-            print('选课失败!')
-        break
+                print('[-] 选课失败!')
+        print('[-] 排队人数较多')
+
+
+username = '0151122244'
+password = '**********'
+# 登陆
+login(username, password)
+# 120120230 唐诗意境与人生情怀(A模块)
+choiceLesson('120120230', '唐诗意境与人生情怀(A模块)')
+checkResult(username)
+
+
