@@ -39,6 +39,8 @@ def getToken(major_num):
 def getMajorNum():
     # 16软工 : 32937
     # 15网工 : 32871
+    if not is_login:
+        return '[-] Not Login!'
     req_url = url + '/student/rollManagement/rollInfo/index'
     cookie = {
         'JSESSIONID' : getCurrentCookie()['JSESSIONID'],
@@ -118,6 +120,14 @@ def checkResult(u):
                 print('[-] 选课失败!')
         print('[-] 排队人数较多')
 
+
+def getScore(lesson_name):
+    req_url = url + '/student/integratedQuery/scoreQuery/allPassingScores/index'
+    cookie = {
+        'JSESSIONID' : getCurrentCookie()['JSESSIONID'],
+        'selectionBar' : '1379870'
+    }
+    pass
 
 username = '0151122244'
 password = '**********'
