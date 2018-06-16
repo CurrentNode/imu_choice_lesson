@@ -25,7 +25,7 @@ def getToken(major_num):
     if is_login:
         sel_url = url + '/student/courseSelect/planCourse/index?fajhh=' + major_num
         sel_cookie = {
-            'JSESSIONID': getCurrentCookie(),
+            'JSESSIONID': getCurrentCookie()['JSESSIONID'],
             'selectionBar': '1293218'
         }
         r = session.get(sel_url, cookies=sel_cookie)
@@ -38,13 +38,19 @@ def getToken(major_num):
 
 def getMajorNum():
     # 16软工 : 32937
-    # 15网工 :
-    pass
+    # 15网工 : 32871
+    req_url = url + '/student/rollManagement/rollInfo/index'
+    cookie = {
+        'JSESSIONID' : getCurrentCookie()['JSESSIONID'],
+        'selectionBar' : '1183421'
+    }
+    major_num = re.findall('<input type="hidden" id="zx" name="zx" value="[0-9]{5}"/>',
+                           session.get(req_url, cookies=cookie).text)[0][-8:-3];
+    print(major_num)
 
 
 def login(u, p):
     req = url + '/j_spring_security_check'
-    print(req)
     data = {
         'j_username': u,
         'j_password': p,
@@ -53,18 +59,20 @@ def login(u, p):
     count = 0
     while True:
         count = count + 1
-        cookie = getNewCookie()
+        cookie = {
+            'JSESSIONID' : getNewCookie()['JSESSIONID']
+        }
         result = session.post(req, data=data, cookies=cookie)
         if '欢迎您' in result.text:
-            print("[-] Success Login")
+            print("[+] Success Login")
             is_login = True
             return getCurrentCookie()
         elif '登 录' in result.text:
-            return
+            return "[-] Username Or Password Error"
         else:
             print(result.text)
             if count % 100 == 0:
-                print('[+] ' + str(count) + ' : Failed')
+                print('[-] ' + str(count) + ' : Failed')
 
 
 def choiceLesson(Id, Name):
@@ -77,7 +85,10 @@ def choiceLesson(Id, Name):
             'sj': '0_0',
             'tokenValue': getToken()
         }
-        choice = session.post(choice_url, cookies=getCurrentCookie(), data=para)
+        cookie = {
+            'JSESSIONID' : getNewCookie()['JSESSIONID']
+        }
+        choice = session.post(choice_url, cookies=cookie, data=para)
 
 
 def checkResult(u):
@@ -88,13 +99,16 @@ def checkResult(u):
             'kcNum': '1',
             'redisKey': u
         }
+        cookie = {
+            'JSESSIONID' : getNewCookie()['JSESSIONID']
+        }
         for i in 10:
-            check = session.post(check_url, cookies=getCurrentCookie(), data=resu_data)
+            check = session.post(check_url, cookies=cookie, data=resu_data)
             response = json.loads(check.content)
             print('[-] ' + response)
             if response['isFinish'] and response['result']:
                 if "选课成功！" in response['result']:
-                    print("[-] 选课成功！")
+                    print("[+] 选课成功！")
                     return
                 else:
                     print('[-] ' + response['result'])
@@ -107,9 +121,8 @@ def checkResult(u):
 username = '0151122244'
 password = '**********'
 # 登陆
-login(username, password)
+print(login(username, password))
 # 120120230 唐诗意境与人生情怀(A模块)
-choiceLesson('120120230', '唐诗意境与人生情怀(A模块)')
-checkResult(username)
-
+# choiceLesson('120120230', '唐诗意境与人生情怀(A模块)')
+# checkResult(username)
 
