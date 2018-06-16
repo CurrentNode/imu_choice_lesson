@@ -46,7 +46,8 @@ def getMajorNum():
     }
     major_num = re.findall('<input type="hidden" id="zx" name="zx" value="[0-9]{5}"/>',
                            session.get(req_url, cookies=cookie).text)[0][-8:-3];
-    print(major_num)
+    # print(major_num)
+    return major_num
 
 
 def login(u, p):
