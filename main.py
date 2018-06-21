@@ -43,8 +43,8 @@ def getMajorNum():
         return '[-] Not Login!'
     req_url = url + '/student/rollManagement/rollInfo/index'
     cookie = {
-        'JSESSIONID' : getCurrentCookie()['JSESSIONID'],
-        'selectionBar' : '1183421'
+        'JSESSIONID': getCurrentCookie()['JSESSIONID'],
+        'selectionBar': '1183421'
     }
     major_num = re.findall('<input type="hidden" id="zx" name="zx" value="[0-9]{5}"/>',
                            session.get(req_url, cookies=cookie).text)[0][-8:-3];
@@ -63,12 +63,13 @@ def login(u, p):
     while True:
         count = count + 1
         cookie = {
-            'JSESSIONID' : getNewCookie()['JSESSIONID']
+            'JSESSIONID': getNewCookie()['JSESSIONID']
         }
         result = session.post(req, data=data, cookies=cookie)
         if '欢迎您' in result.text:
             print("[+] Success Login")
-            is_login = True
+            global is_login
+            is_login= True
             return getCurrentCookie()
         elif '登 录' in result.text:
             return "[-] Username Or Password Error"
@@ -86,12 +87,16 @@ def choiceLesson(Id, Name):
             'kcIds': Id + '_01_2018-2019-1-2',
             'kcms': Name + '_01',
             'sj': '0_0',
-            'tokenValue': getToken()
+            'tokenValue': getToken(getMajorNum())
         }
         cookie = {
-            'JSESSIONID' : getNewCookie()['JSESSIONID']
+            'JSESSIONID': getNewCookie()['JSESSIONID'],
+            'selectionBar': '1293218'
         }
         choice = session.post(choice_url, cookies=cookie, data=para)
+    else:
+        print("[-] Not login")
+        return
 
 
 def checkResult(u):
@@ -103,9 +108,10 @@ def checkResult(u):
             'redisKey': u
         }
         cookie = {
-            'JSESSIONID' : getNewCookie()['JSESSIONID']
+            'JSESSIONID': getNewCookie()['JSESSIONID']
         }
-        for i in 10:
+        print('[-] start check')
+        for i in range(10):
             check = session.post(check_url, cookies=cookie, data=resu_data)
             response = json.loads(check.content)
             print('[-] ' + response)
@@ -119,21 +125,29 @@ def checkResult(u):
             else:
                 print('[-] 选课失败!')
         print('[-] 排队人数较多')
+    else:
+        print('[-] not login')
 
 
 def getScore(lesson_name):
     req_url = url + '/student/integratedQuery/scoreQuery/allPassingScores/index'
     cookie = {
-        'JSESSIONID' : getCurrentCookie()['JSESSIONID'],
-        'selectionBar' : '1379870'
+        'JSESSIONID': getCurrentCookie()['JSESSIONID'],
+        'selectionBar': '1379870'
     }
     pass
 
-username = '0151122244'
+
+username = '**********'
 password = '**********'
 # 登陆
 print(login(username, password))
 # 120120230 唐诗意境与人生情怀(A模块)
-# choiceLesson('120120230', '唐诗意境与人生情怀(A模块)')
-# checkResult(username)
+choiceLesson('140450470', '无线通信与网络')
+choiceLesson('140451380', '网络安全技术')
+choiceLesson('140451390', '物联网技术')
+choiceLesson('140451400', '网络工程')
 
+
+# checkResult(username)
+# checkResult(username)
