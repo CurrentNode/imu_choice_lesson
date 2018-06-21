@@ -100,10 +100,10 @@ def choiceLesson(id, Name, num):
         session.post(choice_url, cookies=cookie, data=para)
         time.sleep(0.1)
         if checkResult(id, num):
-            print('[+] ' + Name + '选课成功！')
+            print('[+] [' + Name + '] 选课成功！')
             return True
         else:
-            print('[-] ' + Name + '好像没选上...')
+            print('[-] [' + Name + '] 好像没选上...')
             return False
 
     else:
