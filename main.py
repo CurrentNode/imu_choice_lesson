@@ -1,7 +1,7 @@
 import re
 import json
 import requests
-
+import time
 url = 'http://jwxt.imu.edu.cn'
 session = requests.session()
 is_login = False
@@ -79,54 +79,85 @@ def login(u, p):
                 print('[-] ' + str(count) + ' : Failed')
 
 
-def choiceLesson(Id, Name):
+def choiceLesson(id, Name, num):
     if is_login:
         choice_url = url + '/student/courseSelect/planCourse/waitingfor?dealType=2'
+        info = getInfo(id, Name, num)
+        if info == 0:
+            print('[-] 未查询到结果，请检查课程号是否正确')
+            return
         para = {
             'fajhh': getMajorNum(),
-            'kcIds': Id + '_01_2018-2019-1-2',
-            'kcms': Name + '_01',
+            'kcIds': info['kcIds'],
+            'kcms': info['kcms'],
             'sj': '0_0',
             'tokenValue': getToken(getMajorNum())
         }
         cookie = {
-            'JSESSIONID': getNewCookie()['JSESSIONID'],
+            'JSESSIONID': getCurrentCookie()['JSESSIONID'],
             'selectionBar': '1293218'
         }
-        choice = session.post(choice_url, cookies=cookie, data=para)
+        session.post(choice_url, cookies=cookie, data=para)
+        time.sleep(0.1)
+        if checkResult(id, num):
+            print('[+] ' + Name + '选课成功！')
+            return True
+        else:
+            print('[-] ' + Name + '好像没选上...')
+            return False
+
+    else:
+        print("[-] Not login")
+        return False
+
+
+# 课程号，课程名，课序号
+def getInfo(id, Name, num):
+    if is_login:
+        req_url = url + '/student/courseSelect/freeCourse/courseList'
+        para = {
+            'jc': '0',
+            'kyl': '1',
+            'searchtj': id,
+            'xq': '0'
+        }
+        cookie = {
+            'JSESSIONID': getCurrentCookie()['JSESSIONID'],
+            'selectionBar': '1293218'
+        }
+        data = session.post(req_url, cookies=cookie, data=para)
+        r = json.loads(data.json()['rwRxkZlList'])
+        ret = {
+            'kcIds': '',
+            'kcms': ''
+        }
+        if len(r) == 0:
+            return 0
+        for i in r:
+            if i['kkxqh'] == num:
+                ret['kcIds'] = i['kch'] + '_' + i['kkxqh'] + '_' + i['zxjxjhh']
+                ret['kcms'] = i['kcm'] + '_' + i['kkxqh']
+                return ret
     else:
         print("[-] Not login")
         return
 
 
-def checkResult(u):
+def checkResult(id, num):
     if is_login:
-        # 查询结果
-        check_url = url + '/student/courseSelect/selectResult/query'
-        resu_data = {
-            'kcNum': '1',
-            'redisKey': u
-        }
+        req_url = url + '/student/courseSelect/thisSemesterCurriculum/callback'
         cookie = {
-            'JSESSIONID': getNewCookie()['JSESSIONID']
+            'JSESSIONID': getCurrentCookie()['JSESSIONID'],
+            'selectionBar': '1293219'
         }
-        print('[-] start check')
-        for i in range(10):
-            check = session.post(check_url, cookies=cookie, data=resu_data)
-            response = json.loads(check.content)
-            print('[-] ' + response)
-            if response['isFinish'] and response['result']:
-                if "选课成功！" in response['result']:
-                    print("[+] 选课成功！")
-                    return
-                else:
-                    print('[-] ' + response['result'])
-                    return
-            else:
-                print('[-] 选课失败!')
-        print('[-] 排队人数较多')
+        r = session.post(req_url, cookies=cookie)
+        if id in str(r.text) and num in str(r.text):
+            return True
+        else:
+            return False
     else:
         print('[-] not login')
+        return False
 
 
 def getScore(lesson_name):
@@ -141,13 +172,10 @@ def getScore(lesson_name):
 username = '**********'
 password = '**********'
 # 登陆
-print(login(username, password))
+login(username, password)
 # 120120230 唐诗意境与人生情怀(A模块)
-choiceLesson('140450470', '无线通信与网络')
-choiceLesson('140451380', '网络安全技术')
-choiceLesson('140451390', '物联网技术')
-choiceLesson('140451400', '网络工程')
-
-
-# checkResult(username)
-# checkResult(username)
+# 需要提供课程号和课序号，课程名无所谓，为了方便表示（好看）
+choiceLesson('140450470', '无线通信与网络', '01')
+choiceLesson('140451380', '网络安全技术', '01')
+choiceLesson('140451390', '物联网技术', '01')
+choiceLesson('140451400', '网络工程', '01')
