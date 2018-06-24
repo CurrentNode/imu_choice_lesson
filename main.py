@@ -2,6 +2,7 @@ import re
 import json
 import requests
 import time
+
 url = 'http://jwxt.imu.edu.cn'
 session = requests.session()
 is_login = False
@@ -69,8 +70,8 @@ def login(u, p):
         if '欢迎您' in result.text:
             print("[+] Success Login")
             global is_login
-            is_login= True
-            return getCurrentCookie()
+            is_login = True
+            return True
         elif '登 录' in result.text:
             return "[-] Username Or Password Error"
         else:
@@ -85,7 +86,7 @@ def choiceLesson(id, Name, num):
         info = getInfo(id, Name, num)
         if info == 0:
             print('[-] 未查询到结果，请检查课程号是否正确')
-            return
+            return False
         para = {
             'fajhh': getMajorNum(),
             'kcIds': info['kcIds'],
@@ -167,6 +168,20 @@ def getScore(lesson_name):
         'selectionBar': '1379870'
     }
     pass
+
+
+def autoChoice(u, p, id, name, num):
+    count = 0
+    while True:
+        if login(u, p):
+            if choiceLesson(id, name, num):
+                return True
+            else:
+                print("[-] 第" + str(count) + "次选课失败")
+        else:
+            if count == 100:
+                print("[-] 第" + str(count) + "次登录失败")
+        count = count + 1
 
 
 username = '**********'
