@@ -169,7 +169,7 @@ def getScore(lesson_name):
     }
     pass
 
-
+# 慎用！可能会被当成DDos封号
 def autoChoice(u, p, id, name, num):
     count = 0
     while True:
