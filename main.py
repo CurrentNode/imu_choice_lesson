@@ -72,12 +72,12 @@ def login(u, p):
             global is_login
             is_login = True
             return True
-        elif '登 录' in result.text:
-            return "[-] Username Or Password Error"
+        elif '用户名或密码错误' in result.text:
+            print("[-] Username Or Password Error")
+            return False
         else:
             print(result.text)
-            if count % 100 == 0:
-                print('[-] ' + str(count) + ' : Failed')
+            print('[-] ' + str(count) + ' : Failed')
 
 
 def choiceLesson(id, Name, num):
@@ -169,6 +169,7 @@ def getScore(lesson_name):
     }
     pass
 
+
 # 慎用！可能会被当成DDos封号
 def autoChoice(u, p, id, name, num):
     count = 0
@@ -190,7 +191,9 @@ password = '**********'
 login(username, password)
 # 120120230 唐诗意境与人生情怀(A模块)
 # 需要提供课程号和课序号，课程名无所谓，为了方便表示（好看）
-choiceLesson('140450470', '无线通信与网络', '01')
-choiceLesson('140451380', '网络安全技术', '01')
-choiceLesson('140451390', '物联网技术', '01')
-choiceLesson('140451400', '网络工程', '01')
+# choiceLesson('140450470', '无线通信与网络', '01')
+# choiceLesson('140451380', '网络安全技术', '01')
+# choiceLesson('140451390', '物联网技术', '01')
+# choiceLesson('140451400', '网络工程', '01')
+choiceLesson('140451480', '移动应用开发', '01')
+# choiceLesson('140451430', '云计算技术', '01')
