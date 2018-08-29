@@ -185,15 +185,37 @@ def autoChoice(u, p, id, name, num):
         count = count + 1
 
 
+def teachEvaluation():
+    req_url = url + '/student/teachingEvaluation/teachingEvaluation/search'
+    cookie = {
+        'JSESSIONID': getCurrentCookie()['JSESSIONID'],
+        'selectionBar': '12580302'
+    }
+    lesson_list = requests.post(req_url, cookies=cookie).json()
+    num = lesson_list['notFinishedNum']
+    data = {}
+    for i in range(num):
+        print(lesson_list['data'][i])
+        for j in range(36, 47):
+            k = str(j).rjust(10, '0')
+            data[k] = '10_1'
+        data['evaluatedPeopleNumber'] = lesson_list['data'][i]['id']['evaluatedPeople']
+        data['evaluationContentNumber'] = lesson_list['data'][i]['id']['evaluationContentNumber']
+        data['questionnaireCode'] = lesson_list['data'][i]['id']['questionnaireCoding']
+        data['tokenValue'] = '' # waiting for finish!
+        data['zgpj'] = "老师的教学效果极佳，可以使同学在领略知识魅力的同时提高自己实际技能。教师教课内容广大博深，高质量，高效率。教课内容新颖，独特，有个性。教师授课表现出来的激情和精神可以深深吸引并打动学生，希望我们的老师可以继续创新，造出更多的精品课。"
+
 username = '**********'
 password = '**********'
+
 # 登陆
 login(username, password)
+
 # 120120230 唐诗意境与人生情怀(A模块)
 # 需要提供课程号和课序号，课程名无所谓，为了方便表示（好看）
 # choiceLesson('140450470', '无线通信与网络', '01')
 # choiceLesson('140451380', '网络安全技术', '01')
 # choiceLesson('140451390', '物联网技术', '01')
 # choiceLesson('140451400', '网络工程', '01')
-choiceLesson('140451480', '移动应用开发', '01')
+# choiceLesson('140451480', '移动应用开发', '01')
 # choiceLesson('140451430', '云计算技术', '01')
