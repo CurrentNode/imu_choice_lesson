@@ -1,3 +1,9 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+# coding: utf-8
+import sys
+reload(sys)
+sys.setdefaultencoding("utf-8")
 import re
 import json
 import requests
@@ -29,12 +35,12 @@ def getToken(major_num):
             'JSESSIONID': getCurrentCookie()['JSESSIONID'],
             'selectionBar': '1293218'
         }
-        r = session.get(sel_url, cookies=sel_cookie)
+        r = session.get(sel_url, cookies=sel_cookie)     
         temp = re.findall('value="[0-9a-z]{32}', r.text)
         while temp.__len__() == 0:
             r = session.get(sel_url, cookies=sel_cookie)
             temp = re.findall('value="[0-9a-z]{32}', r.text)
-        return temp[0][7:]
+            return temp[0][7:]
 
 
 def getMajorNum():
@@ -192,25 +198,49 @@ def teachEvaluation():
         'selectionBar': '12580302'
     }
     lesson_list = requests.post(req_url, cookies=cookie).json()
-    num = lesson_list['notFinishedNum']
-    data = {}
+    # num = lesson_list['notFinishedNum']
+    num = lesson_list['evaluationNum']
+    datas = {}
     for i in range(num):
-        print(lesson_list['data'][i])
+        if lesson_list['data'][i]['isEvaluated'] == '是':
+            pass
         for j in range(36, 47):
             k = str(j).rjust(10, '0')
-            data[k] = '10_1'
-        data['evaluatedPeopleNumber'] = lesson_list['data'][i]['id']['evaluatedPeople']
-        data['evaluationContentNumber'] = lesson_list['data'][i]['id']['evaluationContentNumber']
-        data['questionnaireCode'] = lesson_list['data'][i]['id']['questionnaireCoding']
-        data['tokenValue'] = '' # waiting for finish!
-        data['zgpj'] = "老师的教学效果极佳，可以使同学在领略知识魅力的同时提高自己实际技能。教师教课内容广大博深，高质量，高效率。教课内容新颖，独特，有个性。教师授课表现出来的激情和精神可以深深吸引并打动学生，希望我们的老师可以继续创新，造出更多的精品课。"
+            datas[k] = '10_1'
+        datas['evaluatedPeopleNumber'] = lesson_list['data'][i]['id']['evaluatedPeople']
+        datas['evaluationContentNumber'] = lesson_list['data'][i]['id']['evaluationContentNumber']
+        datas['questionnaireCode'] = lesson_list['data'][i]['id']['questionnaireCoding']
+        token_data = {
+            'evaluatedPeople': lesson_list['data'][i]['evaluatedPeople'],
+            'evaluatedPeopleNumber': lesson_list['data'][i]['id']['evaluatedPeople'],
+            'questionnaireCode': lesson_list['data'][i]['id']['questionnaireCoding'],
+            'questionnaireName': '教师课堂教学效果评价',
+            'evaluationContentNumber': lesson_list['data'][i]['id']['evaluationContentNumber'],
+            'evaluationContentContent': lesson_list['data'][i]['evaluationContent']
+        }
+        datas['tokenValue'] = getEvaluationToken(token_data)
+        datas['zgpj'] = "老师的教学效果极佳，可以使同学在领略知识魅力的同时提高自己实际技能。教师教课内容广大博深，高质量，高效率。教课内容新颖，独特，有个性。教师授课表现出来的激情和精神可以深深吸引并打动学生，希望我们的老师可以继续创新，造出更多的精品课。"
+        temp_url = url + '/student/teachingEvaluation/teachingEvaluation/evaluation'
+        session.post(temp_url, cookies=cookie, data=datas)
+
+
+def getEvaluationToken(datas):
+    req_url = url + '/student/teachingEvaluation/teachingEvaluation/evaluationPage'
+    cookie = {
+        'JSESSIONID': getCurrentCookie()['JSESSIONID'],
+        'selectionBar': '12580302'
+    }
+    r = session.post(req_url, cookies=cookie, data=datas)
+    temp = re.findall('value="[0-9a-z]{32}', r.text)
+    return temp[0][7:]
+
 
 username = '**********'
 password = '**********'
 
 # 登陆
 login(username, password)
-
+# teachEvaluation()
 # 120120230 唐诗意境与人生情怀(A模块)
 # 需要提供课程号和课序号，课程名无所谓，为了方便表示（好看）
 # choiceLesson('140450470', '无线通信与网络', '01')
